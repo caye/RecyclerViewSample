@@ -13,13 +13,14 @@ import com.awimbawe.caye.recyclerviewsample.view.adapters.ItemAdapter
 import com.awimbawe.caye.recyclerviewsample.model.entity.Item
 import com.awimbawe.caye.recyclerviewsample.model.entity.extractDate
 import com.awimbawe.caye.recyclerviewsample.utils.ApiInterface
-import com.awimbawe.caye.recyclerviewsample.view.SwipeToDeleteCallback
+import com.awimbawe.caye.recyclerviewsample.view.helpers.SwipeToDeleteCallback
 import com.awimbawe.caye.recyclerviewsample.viewmodel.ItemViewModel
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import java.util.*
 import android.support.design.widget.CoordinatorLayout
 import android.support.v7.widget.Toolbar
+import com.awimbawe.caye.recyclerviewsample.view.dialogs.ConfirmDeletionDialogFragment
 
 
 class MainActivity : AppCompatActivity(), ItemAdapter.OnItemClickListener {
@@ -53,7 +54,12 @@ class MainActivity : AppCompatActivity(), ItemAdapter.OnItemClickListener {
         }
 
         itemViewModel!!.findAll().observe(this, Observer { items: Collection<Item>? -> itemListAdapter.setData(getListWithDates(items!!)) })
-        var itemTouchHelper = ItemTouchHelper(SwipeToDeleteCallback(this,itemListAdapter));
+        var itemTouchHelper = ItemTouchHelper(
+            SwipeToDeleteCallback(
+                this,
+                itemListAdapter
+            )
+        );
         itemTouchHelper.attachToRecyclerView(recyclerView)
 
         requestItems()
@@ -77,7 +83,10 @@ class MainActivity : AppCompatActivity(), ItemAdapter.OnItemClickListener {
     }
 
     override fun itemClicked(item: Item) {
-        Toast.makeText(this, "Item clicked", Toast.LENGTH_SHORT).show()
+        var confirmDeletionDialog = ConfirmDeletionDialogFragment()
+        confirmDeletionDialog.adapter = itemListAdapter
+        confirmDeletionDialog.item = item
+        confirmDeletionDialog.show(supportFragmentManager,"confirm_deletion_dialog")
     }
 
     /**

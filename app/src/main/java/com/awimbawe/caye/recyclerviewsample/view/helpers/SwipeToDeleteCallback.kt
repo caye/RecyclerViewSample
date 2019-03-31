@@ -1,4 +1,4 @@
-package com.awimbawe.caye.recyclerviewsample.view
+package com.awimbawe.caye.recyclerviewsample.view.helpers
 
 import android.content.Context
 import android.graphics.Canvas

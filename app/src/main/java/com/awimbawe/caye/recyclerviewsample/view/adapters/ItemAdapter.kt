@@ -81,7 +81,15 @@ class ItemAdapter(
     }
 
     fun deleteItem(position: Int) {
-        lastDeletedItem = Pair(position,dataset.get(position))
+        lastDeletedItem = Pair(position, dataset[position])
+        dataset.removeAt(position);
+        notifyItemRemoved(position);
+        showUndoSnackbar();
+    }
+
+    fun deleteItem(item: Item) {
+        var position = dataset.indexOf(item)
+        lastDeletedItem = Pair(position,dataset[position])
         dataset.removeAt(position);
         notifyItemRemoved(position);
         showUndoSnackbar();
