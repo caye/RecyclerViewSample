@@ -3,8 +3,12 @@
 buildscript {
     ext.kotlin_version = '1.3.21'
     repositories {
+        mavenLocal()
         google()
         jcenter()
+        maven {
+            url "https://maven.google.com"
+        }
         
     }
     dependencies {
@@ -17,9 +21,12 @@ buildscript {
 
 allprojects {
     repositories {
+        mavenLocal()
         google()
         jcenter()
-        
+        maven {
+            url "https://maven.google.com"
+        }
     }
 }
 
