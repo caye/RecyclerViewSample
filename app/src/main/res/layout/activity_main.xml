@@ -8,5 +8,6 @@
     android:fitsSystemWindows="true">
 
     <include layout="@layout/app_content"/>
+    <include layout="@layout/progress_bar"/>
 
 </android.support.design.widget.CoordinatorLayout>

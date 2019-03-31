@@ -20,12 +20,19 @@ import io.reactivex.schedulers.Schedulers
 import java.util.*
 import android.support.design.widget.CoordinatorLayout
 import android.support.v7.widget.Toolbar
+import android.view.View
+import android.widget.ProgressBar
+import android.widget.TextView
 import com.awimbawe.caye.recyclerviewsample.view.dialogs.ConfirmDeletionDialogFragment
 
-
+/**
+ * The main [AppCompatActivity] class, it holds the view (no fragment used here) with the recycler view and the adapter
+ * used by the list, also fetches the data and gives it to the adapter to render
+ */
 class MainActivity : AppCompatActivity(), ItemAdapter.OnItemClickListener {
     private lateinit var coordinatorLayout: CoordinatorLayout
-    private lateinit var toolbar: Toolbar
+    private lateinit var progressBar: ProgressBar
+    private lateinit var progressBarInfo : TextView
     private lateinit var recyclerView: RecyclerView
     private lateinit var viewManager: RecyclerView.LayoutManager
     private lateinit var itemListAdapter : ItemAdapter
@@ -41,11 +48,14 @@ class MainActivity : AppCompatActivity(), ItemAdapter.OnItemClickListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //Fetching layout
         coordinatorLayout = findViewById<CoordinatorLayout>(R.id.coordinator_layout);
-
+        progressBar = findViewById<ProgressBar>(R.id.progress_bar);
         itemViewModel = ViewModelProviders.of(this).get(ItemViewModel::class.java)
         viewManager = LinearLayoutManager(this)
         itemListAdapter = ItemAdapter(this,data,this)
+
+        //Setup of recycler view
         recyclerView = findViewById<RecyclerView>(R.id.item_list_recyclerview).apply {
             setHasFixedSize(true)
             layoutManager = viewManager
@@ -53,7 +63,7 @@ class MainActivity : AppCompatActivity(), ItemAdapter.OnItemClickListener {
             addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
         }
 
-        itemViewModel!!.findAll().observe(this, Observer { items: Collection<Item>? -> itemListAdapter.setData(getListWithDates(items!!)) })
+        //enabling swipe functionality
         var itemTouchHelper = ItemTouchHelper(
             SwipeToDeleteCallback(
                 this,
@@ -61,6 +71,8 @@ class MainActivity : AppCompatActivity(), ItemAdapter.OnItemClickListener {
             )
         );
         itemTouchHelper.attachToRecyclerView(recyclerView)
+
+        itemViewModel!!.findAll().observe(this, Observer { items: Collection<Item>? -> itemListAdapter.setData(getListWithDates(items!!)) })
 
         requestItems()
     }
@@ -70,23 +82,18 @@ class MainActivity : AppCompatActivity(), ItemAdapter.OnItemClickListener {
      * update the dataset in the adapter
      */
     private fun requestItems() {
+        startProgressBar()
+        progressBar.setProgress(50)
         api.requestItems()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 { items ->
                     itemListAdapter.setData(getListWithDates(items))
-                    Toast.makeText(this, "Test Results updated", Toast.LENGTH_SHORT).show()
+                    stopProgressBar()
                 },
                 { error -> Toast.makeText(this, error.message, Toast.LENGTH_SHORT).show() }
             )
-    }
-
-    override fun itemClicked(item: Item) {
-        var confirmDeletionDialog = ConfirmDeletionDialogFragment()
-        confirmDeletionDialog.adapter = itemListAdapter
-        confirmDeletionDialog.item = item
-        confirmDeletionDialog.show(supportFragmentManager,"confirm_deletion_dialog")
     }
 
     /**
@@ -110,6 +117,38 @@ class MainActivity : AppCompatActivity(), ItemAdapter.OnItemClickListener {
         }
 
         return result
+    }
+
+    /**
+     * Performs the showing of the confirmation of deletion dialog
+     */
+    override fun itemClicked(item: Item) {
+        var confirmDeletionDialog = ConfirmDeletionDialogFragment()
+        confirmDeletionDialog.adapter = itemListAdapter
+        confirmDeletionDialog.item = item
+        confirmDeletionDialog.show(supportFragmentManager,"confirm_deletion_dialog")
+    }
+
+    /**
+     * Starts a progress bar indicator
+     */
+    private fun startProgressBar() {
+        progressBar.progress = 0
+        progressBar.animate()
+        progressBarInfo = findViewById<TextView>(R.id.progress_bar_info)
+        progressBarInfo.text = getText(R.string.fetching_data)
+        progressBar.visibility = View.VISIBLE
+    }
+
+
+    /**
+     * Stops a progress bar indicator
+     */
+    private fun stopProgressBar() {
+        progressBarInfo.text = getText(R.string.ready)
+        progressBar.setProgress(100)
+        progressBar.visibility = View.GONE
+        progressBarInfo.visibility = View.GONE
     }
 
 }

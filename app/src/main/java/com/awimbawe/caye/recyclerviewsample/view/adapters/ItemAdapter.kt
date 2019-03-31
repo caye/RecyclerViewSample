@@ -1,6 +1,5 @@
 package com.awimbawe.caye.recyclerviewsample.view.adapters
 
-import android.app.Activity
 import android.content.Context
 import android.support.design.widget.CoordinatorLayout
 import android.support.v7.util.DiffUtil
@@ -16,105 +15,130 @@ import com.awimbawe.caye.recyclerviewsample.model.entity.Item
 import com.awimbawe.caye.recyclerviewsample.model.entity.extractDate
 import android.support.design.widget.Snackbar
 
+/**
+ * Extension function used to trim text in an acceptable manner so they are shown as "textCutted ..."
+ */
+private fun TextView.abbreviate(text: String,maxLegth: Int) {
+    var result = text
 
+    if(result.length > maxLegth) {
+        result = text.substring(0,maxLegth - 3) + "..."
+    }
 
+    this.text = result
+}
 
+/**
+ * A [RecyclerView.Adapter] class responsible for
+ */
 class ItemAdapter(
     private val context : Context,
-    private var dataset: MutableList<Item>,
+    private var data: MutableList<Item>,
     private val onItemClicked: OnItemClickListener
 ) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private var lastDeletedItem : Pair<Int,Item>? = null
 
-    // Create new views (invoked by the layout manager)
-    override fun onCreateViewHolder(parent: ViewGroup,
-                                    viewType: Int): RecyclerView.ViewHolder {
+    /**
+     * Interface implemented by the [MainActivity] so we can let it know when an item has been clicked
+     */
+    interface OnItemClickListener {
+        fun itemClicked(item: Item)
+    }
+
+    // Create new view holders so layout only needs to be inflated once
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         when(viewType) {
-            1 -> return DateViewHolder(LayoutInflater.from(parent.context)
+            1 -> return DateHeaderViewHolder(LayoutInflater.from(parent.context)
                 .inflate(R.layout.header_layout, parent, false))
             else -> return ItemViewHolder(LayoutInflater.from(parent.context)
                 .inflate(R.layout.item_layout, parent, false))
         }
-        // set the view's size, margins, paddings and layout parameters
-
     }
 
+    // returns the type of the view, if its ItemType.Data or ItemType.Date
     override fun getItemViewType(position: Int): Int {
-        // Just as an example, return 0 or 2 depending on position
-        // Note that unlike in ListView adapters, types don't have to be contiguous
-        return dataset.get(position).type.value
+        return data.get(position).type.value
     }
 
-    // Replace the contents of a view (invoked by the layout manager)
+    // Replace the contents of a view holders
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        // - get element from your dataset at this position
-        // - replace the contents of the view with that element
         when(holder.itemViewType) {
             1 -> {
-                var viewHolder = holder as DateViewHolder
-                viewHolder.bind(dataset.toMutableList()!![position])
+                var viewHolder = holder as DateHeaderViewHolder
+                viewHolder.bind(data.toMutableList()!![position])
             }
             else -> {
                 var viewHolder = holder as ItemViewHolder
-                viewHolder.bind(dataset.toMutableList()!![position],onItemClicked)
+                viewHolder.bind(data.toMutableList()!![position],onItemClicked)
             }
         }
 
     }
 
-    // Return the size of your dataset (invoked by the layout manager)
-    override fun getItemCount() = dataset.size
+    // Return the size of your data
+    override fun getItemCount() = data.size
 
+    /**
+     * Sets a given [MutableList] to be the data to be rendered by this adapter
+     */
     fun setData(newData: MutableList<Item>) {
-        if (dataset != null) {
-            val testDiffCallback = TestDiffCallback(dataset!!, newData)
+        if (data != null) {
+            val testDiffCallback = ItemListDiffCallback(data!!, newData)
             val diffResult = DiffUtil.calculateDiff(testDiffCallback)
 
-            dataset!!.clear()
-            dataset!!.addAll(newData)
+            data!!.clear()
+            data!!.addAll(newData)
             diffResult.dispatchUpdatesTo(this)
         } else {
             // first initialization
-            dataset = newData
+            data = newData
         }
     }
 
+    /**
+     * Given a position, deletes an item in the list and shows the snackbar to undo it
+     */
     fun deleteItem(position: Int) {
-        lastDeletedItem = Pair(position, dataset[position])
-        dataset.removeAt(position);
+        lastDeletedItem = Pair(position, data[position])
+        data.removeAt(position);
         notifyItemRemoved(position);
         showUndoSnackbar();
     }
 
+    /**
+     * Given an [Item], finds its position deletes the item in the list and shows the snackbar to undo it
+     */
     fun deleteItem(item: Item) {
-        var position = dataset.indexOf(item)
-        lastDeletedItem = Pair(position,dataset[position])
-        dataset.removeAt(position);
+        var position = data.indexOf(item)
+        lastDeletedItem = Pair(position,data[position])
+        data.removeAt(position);
         notifyItemRemoved(position);
         showUndoSnackbar();
     }
 
-    fun showUndoSnackbar() {
+    /**
+     * Shows an snackbar in order to be available to undo the deletion
+     */
+    private fun showUndoSnackbar() {
         val activity = context as MainActivity
         var view = activity.findViewById<CoordinatorLayout>(R.id.coordinator_layout)
         val snackbar = Snackbar.make(
-            view, "item deleted",
+            view, R.string.item_deleted,
             Snackbar.LENGTH_LONG
         )
-        snackbar.setAction("Undo deletion") { undoDeleteItem() }
+        snackbar.setAction(R.string.undo_deletion) { undoDeleteItem() }
         snackbar.show()
     }
 
-    fun undoDeleteItem() {
+    /**
+     * Restores the last item deleted
+     */
+    private fun undoDeleteItem() {
         if(lastDeletedItem != null) {
-            dataset.add(lastDeletedItem!!.first,lastDeletedItem!!.second)
+            data.add(lastDeletedItem!!.first,lastDeletedItem!!.second)
             notifyItemInserted(lastDeletedItem!!.first);
         }
-    }
-
-    interface OnItemClickListener {
-        fun itemClicked(item: Item)
     }
 
     /**
@@ -151,54 +175,41 @@ class ItemAdapter(
     }
 
     /**
-     * ViewHolder for the dates in the list
+     * ViewHolder for the dates headers in the list
      */
-    inner class DateViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val dateMonth : TextView
-        private val dateChecked : ImageView
-
-        init {
-            dateMonth = itemView.findViewById(R.id.header_month)
-            dateChecked = itemView.findViewById(R.id.header_checked)
-        }
+    inner class DateHeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val headerMonth : TextView = itemView.findViewById(R.id.header_month)
+        private val headerChecked : ImageView = itemView.findViewById(R.id.header_checked)
 
         fun bind(item: Item?) {
             if (item != null) {
-                dateMonth.text = item.month.extractDate()
+                headerMonth.text = item.month.extractDate()
 
-                if ((1..10).shuffled().first() % 2 == 0)  dateChecked.visibility = View.VISIBLE  else dateChecked.visibility = View.GONE
+                if ((1..10).shuffled().first() % 2 == 0)  headerChecked.visibility = View.VISIBLE  else headerChecked.visibility = View.GONE
             }
         }
     }
 
-
-    inner class TestDiffCallback(private val oldTests: List<Item>, private val newTests: List<Item>) :
+    /**
+     * Checks wether a [Item] List has been changed
+     */
+    inner class ItemListDiffCallback(private val oldItems: List<Item>, private val newItems: List<Item>) :
         DiffUtil.Callback() {
 
         override fun getOldListSize(): Int {
-            return oldTests.size
+            return oldItems.size
         }
 
         override fun getNewListSize(): Int {
-            return newTests.size
+            return newItems.size
         }
 
         override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-            return oldTests[oldItemPosition].id === newTests[newItemPosition].id
+            return oldItems[oldItemPosition].id === newItems[newItemPosition].id
         }
 
         override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-            return oldTests[oldItemPosition] == newTests[newItemPosition]
+            return oldItems[oldItemPosition] == newItems[newItemPosition]
         }
     }
-}
-
-private fun TextView.abbreviate(text: String,maxLegth: Int) {
-    var result = text
-
-    if(result.length > maxLegth) {
-        result = text.substring(0,maxLegth - 3) + "..."
-    }
-
-    this.text = result
 }

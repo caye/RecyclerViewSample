@@ -9,20 +9,19 @@ import com.awimbawe.caye.recyclerviewsample.view.adapters.ItemAdapter
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.support.v4.content.ContextCompat
+import android.view.View
 import com.awimbawe.caye.recyclerviewsample.R
 
+/**
+ * A [ItemTouchHelper.SimpleCallback] class responsible for reacting when a swipe is perform so it can call the adapter
+ * in order to delete an item
+ */
 class SwipeToDeleteCallback(
-    var context : Context,
-    var adapter : ItemAdapter
+    private var context : Context,
+    private var adapter : ItemAdapter
 ): ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-    private var icon: Drawable
-    private var background : ColorDrawable
-
-    init {
-        icon = ContextCompat.getDrawable(context,
-            R.drawable.delete_icon)!!
-        background = ColorDrawable(ContextCompat.getColor(context,R.color.colorPrimary))
-    }
+    private val icon: Drawable = ContextCompat.getDrawable(context, R.drawable.delete_icon)!!
+    private val background : ColorDrawable = ColorDrawable(ContextCompat.getColor(context,R.color.colorPrimary))
 
     /**
      * Used only for up and down movements, not relevant but we must override
@@ -57,28 +56,50 @@ class SwipeToDeleteCallback(
         val iconBottom = iconTop + icon.intrinsicHeight
 
         if (dX > 0) { // Swiping to the right
-            val iconLeft = itemView.left + iconMargin + icon.intrinsicWidth
-            val iconRight = itemView.left + iconMargin
-            icon.setBounds(iconLeft, iconTop, iconRight, iconBottom)
-
-            background.setBounds(
-                itemView.left, itemView.top,
-                (itemView.left + dX).toInt() + backgroundCornerOffset, itemView.bottom
-            )
+            moveRight(itemView, iconMargin, iconTop, iconBottom, dX, backgroundCornerOffset)
         } else if (dX < 0) { // Swiping to the left
-            val iconLeft = itemView.right - iconMargin - icon.intrinsicWidth
-            val iconRight = itemView.right - iconMargin
-            icon.setBounds(iconLeft, iconTop, iconRight, iconBottom)
-
-            background.setBounds(
-                (itemView.right + dX).toInt() - backgroundCornerOffset,
-                itemView.top, itemView.right, itemView.bottom
-            )
+            moveLeft(itemView, iconMargin, iconTop, iconBottom, dX, backgroundCornerOffset)
         } else { // view is unSwiped
             background.setBounds(0, 0, 0, 0)
         }
 
         background.draw(c)
         icon.draw(c)
+    }
+
+    private fun moveLeft(
+        itemView: View,
+        iconMargin: Int,
+        iconTop: Int,
+        iconBottom: Int,
+        dX: Float,
+        backgroundCornerOffset: Int
+    ) {
+        val iconLeft = itemView.right - iconMargin - icon.intrinsicWidth
+        val iconRight = itemView.right - iconMargin
+        icon.setBounds(iconLeft, iconTop, iconRight, iconBottom)
+
+        background.setBounds(
+            (itemView.right + dX).toInt() - backgroundCornerOffset,
+            itemView.top, itemView.right, itemView.bottom
+        )
+    }
+
+    private fun moveRight(
+        itemView: View,
+        iconMargin: Int,
+        iconTop: Int,
+        iconBottom: Int,
+        dX: Float,
+        backgroundCornerOffset: Int
+    ) {
+        val iconLeft = itemView.left + iconMargin + icon.intrinsicWidth
+        val iconRight = itemView.left + iconMargin
+        icon.setBounds(iconLeft, iconTop, iconRight, iconBottom)
+
+        background.setBounds(
+            itemView.left, itemView.top,
+            (itemView.left + dX).toInt() + backgroundCornerOffset, itemView.bottom
+        )
     }
 }

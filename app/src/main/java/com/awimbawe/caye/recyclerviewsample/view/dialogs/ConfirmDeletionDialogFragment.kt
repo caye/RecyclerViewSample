@@ -14,13 +14,8 @@ import com.awimbawe.caye.recyclerviewsample.view.adapters.ItemAdapter
 
 
 /**
- * A simple [Fragment] subclass.
- * Activities that contain this fragment must implement the
- * [ConfirmDeletionDialogFragment.OnFragmentInteractionListener] interface
- * to handle interaction events.
- * Use the [ConfirmDeletionDialogFragment.newInstance] factory method to
- * create an instance of this fragment.
- *
+ * A [DialogFragment] class that shows an alert asking to confirm the deletion or not of an item, it the deletion is
+ * confirmed, then the adapter is called and the object is removed from the current list of objects
  */
 class ConfirmDeletionDialogFragment: DialogFragment() {
 

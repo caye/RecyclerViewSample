@@ -3,6 +3,9 @@ package com.awimbawe.caye.recyclerviewsample.model.converter
 import android.arch.persistence.room.TypeConverter
 import com.awimbawe.caye.recyclerviewsample.model.entity.Item
 
+/**
+ * Converter for the ItemType enum
+ */
 class ItemTypeConverter {
     @TypeConverter
     fun toItemType(type: Int): Item.ItemType {
