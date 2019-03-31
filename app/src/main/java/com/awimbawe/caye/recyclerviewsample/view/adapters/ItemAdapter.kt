@@ -1,5 +1,8 @@
 package com.awimbawe.caye.recyclerviewsample.view.adapters
 
+import android.app.Activity
+import android.content.Context
+import android.support.design.widget.CoordinatorLayout
 import android.support.v7.util.DiffUtil
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -7,16 +10,22 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import com.awimbawe.caye.recyclerviewsample.MainActivity
 import com.awimbawe.caye.recyclerviewsample.R
 import com.awimbawe.caye.recyclerviewsample.model.entity.Item
 import com.awimbawe.caye.recyclerviewsample.model.entity.extractDate
+import android.support.design.widget.Snackbar
+
+
 
 
 class ItemAdapter(
+    private val context : Context,
     private var dataset: MutableList<Item>,
     private val onItemClicked: OnItemClickListener
 ) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    private var lastDeletedItem : Pair<Int,Item>? = null
 
     // Create new views (invoked by the layout manager)
     override fun onCreateViewHolder(parent: ViewGroup,
@@ -72,7 +81,28 @@ class ItemAdapter(
     }
 
     fun deleteItem(position: Int) {
+        lastDeletedItem = Pair(position,dataset.get(position))
+        dataset.removeAt(position);
+        notifyItemRemoved(position);
+        showUndoSnackbar();
+    }
 
+    fun showUndoSnackbar() {
+        val activity = context as MainActivity
+        var view = activity.findViewById<CoordinatorLayout>(R.id.coordinator_layout)
+        val snackbar = Snackbar.make(
+            view, "item deleted",
+            Snackbar.LENGTH_LONG
+        )
+        snackbar.setAction("Undo deletion") { undoDeleteItem() }
+        snackbar.show()
+    }
+
+    fun undoDeleteItem() {
+        if(lastDeletedItem != null) {
+            dataset.add(lastDeletedItem!!.first,lastDeletedItem!!.second)
+            notifyItemInserted(lastDeletedItem!!.first);
+        }
     }
 
     interface OnItemClickListener {

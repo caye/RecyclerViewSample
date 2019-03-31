@@ -7,17 +7,24 @@ import android.os.Bundle
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.helper.ItemTouchHelper
 import android.widget.Toast
 import com.awimbawe.caye.recyclerviewsample.view.adapters.ItemAdapter
 import com.awimbawe.caye.recyclerviewsample.model.entity.Item
 import com.awimbawe.caye.recyclerviewsample.model.entity.extractDate
 import com.awimbawe.caye.recyclerviewsample.utils.ApiInterface
+import com.awimbawe.caye.recyclerviewsample.view.SwipeToDeleteCallback
 import com.awimbawe.caye.recyclerviewsample.viewmodel.ItemViewModel
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import java.util.*
+import android.support.design.widget.CoordinatorLayout
+import android.support.v7.widget.Toolbar
+
 
 class MainActivity : AppCompatActivity(), ItemAdapter.OnItemClickListener {
+    private lateinit var coordinatorLayout: CoordinatorLayout
+    private lateinit var toolbar: Toolbar
     private lateinit var recyclerView: RecyclerView
     private lateinit var viewManager: RecyclerView.LayoutManager
     private lateinit var itemListAdapter : ItemAdapter
@@ -33,9 +40,11 @@ class MainActivity : AppCompatActivity(), ItemAdapter.OnItemClickListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        coordinatorLayout = findViewById<CoordinatorLayout>(R.id.coordinator_layout);
+
         itemViewModel = ViewModelProviders.of(this).get(ItemViewModel::class.java)
         viewManager = LinearLayoutManager(this)
-        itemListAdapter = ItemAdapter(data,this)
+        itemListAdapter = ItemAdapter(this,data,this)
         recyclerView = findViewById<RecyclerView>(R.id.item_list_recyclerview).apply {
             setHasFixedSize(true)
             layoutManager = viewManager
@@ -44,6 +53,8 @@ class MainActivity : AppCompatActivity(), ItemAdapter.OnItemClickListener {
         }
 
         itemViewModel!!.findAll().observe(this, Observer { items: Collection<Item>? -> itemListAdapter.setData(getListWithDates(items!!)) })
+        var itemTouchHelper = ItemTouchHelper(SwipeToDeleteCallback(this,itemListAdapter));
+        itemTouchHelper.attachToRecyclerView(recyclerView)
 
         requestItems()
     }

@@ -21,7 +21,7 @@ class SwipeToDeleteCallback(
     init {
         icon = ContextCompat.getDrawable(context,
             R.drawable.delete_icon)!!
-        background = ColorDrawable(android.graphics.Color.BLUE)
+        background = ColorDrawable(ContextCompat.getColor(context,R.color.colorPrimary))
     }
 
     /**
@@ -63,7 +63,7 @@ class SwipeToDeleteCallback(
 
             background.setBounds(
                 itemView.left, itemView.top,
-                itemView.left + dX as Int + backgroundCornerOffset, itemView.bottom
+                (itemView.left + dX).toInt() + backgroundCornerOffset, itemView.bottom
             )
         } else if (dX < 0) { // Swiping to the left
             val iconLeft = itemView.right - iconMargin - icon.intrinsicWidth
@@ -71,7 +71,7 @@ class SwipeToDeleteCallback(
             icon.setBounds(iconLeft, iconTop, iconRight, iconBottom)
 
             background.setBounds(
-                itemView.right + dX as Int - backgroundCornerOffset,
+                (itemView.right + dX).toInt() - backgroundCornerOffset,
                 itemView.top, itemView.right, itemView.bottom
             )
         } else { // view is unSwiped
