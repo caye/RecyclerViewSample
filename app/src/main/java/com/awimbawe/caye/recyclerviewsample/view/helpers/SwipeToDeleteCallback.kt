@@ -15,6 +15,8 @@ import com.awimbawe.caye.recyclerviewsample.R
 /**
  * A [ItemTouchHelper.SimpleCallback] class responsible for reacting when a swipe is perform so it can call the adapter
  * in order to delete an item
+ *
+ * Taken originally from https://gist.github.com/keinix/b1aa2417dbea9311a1207eddf8b9d47b
  */
 class SwipeToDeleteCallback(
     private var context : Context,
